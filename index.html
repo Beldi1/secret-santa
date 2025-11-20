@@ -476,8 +476,8 @@
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- CONFIGURARE GEMINI API ---
-        // OBȚINE CHEIA DE AICI: https://aistudio.google.com/app/apikey
-        const GEMINI_API_KEY = "AIzaSyDwkf5UtOrwmES5z2N90AvBbM_wzPWtLVI"; // <--- PUNE CHEIA TA AICI ÎNTRE GHILIMELE
+        // AIzaSyDwkf5UtOrwmES5z2N90AvBbM_wzPWtLVI
+        const GEMINI_API_KEY = "AIzaSyDwkf5UtOrwmES5z2N90AvBbM_wzPWtLVI";
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -503,10 +503,10 @@
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         
-        // PENTRU TEST (Activ):
-        const drawDate = new Date(\December 1, ${currentYear} 00:00:00`).getTime();
-        // PENTRU LIVE (Decomentează pentru 1 Dec):
-        // const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+        // PENTRU TEST (Dezactivat):
+        // const drawDate = new Date().getTime() - 1000; 
+        // PENTRU LIVE (Activ):
+        const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
 
         let finalResults = null; 
         let currentTargetPerson = null; // Stocam pe cine am extras pentru AI
