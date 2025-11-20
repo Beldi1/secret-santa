@@ -500,15 +500,6 @@
             }
         }
 
-        // FUNCTIE ADMIN STERGERE
-        window.deleteUser = async function(id) {
-            if(confirm("Ștergi acest utilizator?")) {
-                try {
-                    await deleteDoc(doc(db, "secret_santa_users", id));
-                    checkIfJoined();
-                } catch (e) { console.error(e); }
-            }
-        }
 
         // --- LIVE LIST ---
         function listenToParticipants() {
