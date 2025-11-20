@@ -17,6 +17,7 @@
             --glass: rgba(255, 255, 255, 0.08);
             --glass-border: rgba(255, 255, 255, 0.15);
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --ai-purple: #c084fc; /* Culoare pentru AI */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -87,7 +88,7 @@
         }
         
         /* --- INPUTS --- */
-        input {
+        input, textarea {
             width: 100%;
             padding: 16px;
             margin: 8px 0;
@@ -97,8 +98,10 @@
             color: white;
             font-size: 1rem;
             transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
         }
-        input:focus {
+        textarea { resize: vertical; min-height: 80px; }
+        input:focus, textarea:focus {
             border-color: var(--gold);
             background: rgba(0,0,0,0.5);
             box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
@@ -129,6 +132,18 @@
             transition: 0.5s;
         }
         .btn:hover::after { left: 100%; }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3);
+            font-size: 1rem;
+            padding: 12px 20px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
 
         /* --- UPLOAD ZONE --- */
         .file-upload-wrapper { margin: 15px 0; }
@@ -259,6 +274,8 @@
         .modal-content {
             background: linear-gradient(145deg, #1a1a1a, #2a0a0a);
             width: 90%; max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
             padding: 40px 20px;
             border-radius: 30px;
             border: 2px solid var(--gold);
@@ -267,7 +284,6 @@
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 0 50px rgba(255, 204, 0, 0.2);
             position: relative;
-            overflow: hidden;
         }
         .modal-overlay.active .modal-content { transform: scale(1); }
 
@@ -284,7 +300,7 @@
             font-family: 'Mountains of Christmas', cursive;
             font-size: 2.5rem;
             color: var(--gold);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .close-modal-btn {
@@ -298,6 +314,19 @@
             transition: 0.3s;
         }
         .close-modal-btn:hover { background: white; color: black; }
+
+        /* --- AI RESULTS AREA --- */
+        #ai-result-area {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--ai-purple);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: none;
+        }
 
         /* Canvas Confetti */
         #confetti-canvas {
@@ -330,6 +359,8 @@
             
             <input type="text" id="username" placeholder="Nume și Prenume" required autocomplete="off">
             <input type="password" id="userpass" placeholder="Parolă Secretă" required>
+            <!-- AI FIELD: INTERESTS -->
+            <textarea id="interests" placeholder="Ce îți place? (ex: pisici, cafea, gaming, cărți SF) - Ajută Spiridușul AI!"></textarea>
             
             <div id="upload-area">
                 <div class="file-upload-wrapper">
@@ -405,8 +436,23 @@
             
             <img id="target-img" class="modal-img" src="">
             <h1 id="target-name" class="winner-name">NUME</h1>
+            <p id="target-interests" style="color: var(--gold); font-size: 0.85rem; margin-bottom: 15px; font-style: italic;"></p>
             
             <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 20px;">Sssst! E un secret! 🤫</p>
+
+            <!-- AI BUTTONS -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 20px;">
+                <p style="font-size: 0.8rem; margin-bottom: 10px;">✨ Spiridușul AI te ajută:</p>
+                <button class="btn btn-ai" onclick="askGeminiGift()">
+                    🎁 Sugestii Cadouri
+                </button>
+                <button class="btn btn-ai" onclick="askGeminiPoem()">
+                    📜 Mesaj de Crăciun
+                </button>
+                <div class="loader" id="ai-loader" style="margin-top: 10px;"></div>
+                <div id="ai-result-area"></div>
+            </div>
+
             <button class="close-modal-btn" onclick="closeModal()">Am înțeles!</button>
         </div>
     </div>
@@ -428,6 +474,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, setDoc, getDoc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- CONFIGURARE GEMINI API ---
+        // OBȚINE CHEIA DE AICI: https://aistudio.google.com/app/apikey
+        const GEMINI_API_KEY = "AIzaSyDwkf5UtOrwmES5z2N90AvBbM_wzPWtLVI"; // <--- PUNE CHEIA TA AICI ÎNTRE GHILIMELE
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -453,13 +503,13 @@
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         
-        // PENTRU TEST (Dezactivat):
-        // const drawDate = new Date().getTime() - 1000; 
-        
-        // PENTRU LIVE (Activ - 1 Decembrie):
-        const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+        // PENTRU TEST (Activ):
+        const drawDate = new Date().getTime() - 1000; 
+        // PENTRU LIVE (Decomentează pentru 1 Dec):
+        // const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
 
         let finalResults = null; 
+        let currentTargetPerson = null; // Stocam pe cine am extras pentru AI
 
         // --- HELPERS ---
         async function hashPassword(password) {
@@ -468,6 +518,77 @@
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- GEMINI AI LOGIC ---
+        async function callGemini(prompt) {
+            if (!GEMINI_API_KEY) {
+                alert("Lipsă API Key Gemini! Adaugă cheia în cod.");
+                return null;
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Eroare Gemini:", error);
+                return "Spiridușul AI a adormit... Încearcă mai târziu.";
+            }
+        }
+
+        window.askGeminiGift = async function() {
+            if(!currentTargetPerson) return;
+            const btn = document.querySelector('.btn-ai');
+            const loader = document.getElementById('ai-loader');
+            const resultArea = document.getElementById('ai-result-area');
+
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            const interests = currentTargetPerson.interests || "lucruri generale";
+            const prompt = `Sugerează 3 idei de cadouri creative și amuzante pentru Secret Santa, cu un buget de aproximativ 100 RON. Persoana se numește ${currentTargetPerson.name} și îi place: ${interests}. Răspunde în limba română, cu bullet points și emoji-uri.`;
+
+            const response = await callGemini(prompt);
+            
+            loader.style.display = 'none';
+            if(response) {
+                resultArea.innerHTML = markedText(response); // Simple format
+                resultArea.style.display = 'block';
+            }
+        }
+
+        window.askGeminiPoem = async function() {
+            if(!currentTargetPerson) return;
+            const loader = document.getElementById('ai-loader');
+            const resultArea = document.getElementById('ai-result-area');
+
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            const prompt = `Scrie o poezie scurtă și amuzantă de Crăciun (max 4 versuri) pentru ${currentTargetPerson.name}, de la Secret Santa. Răspunde în română.`;
+
+            const response = await callGemini(prompt);
+            
+            loader.style.display = 'none';
+            if(response) {
+                resultArea.innerText = response;
+                resultArea.style.display = 'block';
+            }
+        }
+        
+        // Helper simplu pentru formatare text AI
+        function markedText(text) {
+            return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         }
 
         // --- INIT ---
@@ -506,10 +627,11 @@
         window.handleLogin = async function() {
             const name = document.getElementById('username').value;
             const pass = document.getElementById('userpass').value;
+            const interests = document.getElementById('interests').value;
             const imgBase64 = document.getElementById('final-image-base64').value;
             const loginMsg = document.getElementById('login-msg');
             
-            if(!name || !pass) { loginMsg.innerText = "Completează toate câmpurile!"; return; }
+            if(!name || !pass) { loginMsg.innerText = "Completează Nume și Parolă!"; return; }
             
             loginMsg.innerText = 'Verificăm... 🎅';
 
@@ -523,13 +645,14 @@
                     if(userData.passwordHash && userData.passwordHash !== passHash) {
                          loginMsg.innerText = 'Parolă greșită!'; return;
                     }
-                    currentUser = { name: userData.name, img: userData.img, passwordHash: passHash };
+                    // Actualizam interesele daca s-a logat din nou si a scris ceva nou (Optional, dar util)
+                    currentUser = { name: userData.name, img: userData.img, passwordHash: passHash, interests: userData.interests || interests };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
                     loginMsg.innerText = '';
                     checkLocalLogin();
                 } else {
                     const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-                    currentUser = { name, img: finalImg, passwordHash: passHash };
+                    currentUser = { name, img: finalImg, passwordHash: passHash, interests: interests };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
                     loginMsg.innerText = '';
                     checkLocalLogin();
@@ -575,7 +698,11 @@
                 if(!snap.empty) { alert("Deja înscris!"); location.reload(); return; }
 
                 await addDoc(usersCollection, {
-                    name: currentUser.name, img: currentUser.img, passwordHash: currentUser.passwordHash, timestamp: Date.now()
+                    name: currentUser.name, 
+                    img: currentUser.img, 
+                    passwordHash: currentUser.passwordHash, 
+                    interests: currentUser.interests || "", // Salvam interesele in DB
+                    timestamp: Date.now()
                 });
                 await checkIfJoined();
                 btn.style.display = 'block'; loader.style.display = 'none';
@@ -650,9 +777,17 @@
             const targetPerson = allParticipants.find(p => p.name === targetName);
             if (!targetPerson) return alert("Persoană necunoscută.");
 
+            currentTargetPerson = targetPerson; // Salvam pentru AI
+
             // Show Modal
             document.getElementById('target-name').innerText = targetPerson.name;
             document.getElementById('target-img').src = targetPerson.img;
+            if(targetPerson.interests) {
+                document.getElementById('target-interests').innerText = `Interese: ${targetPerson.interests}`;
+            } else {
+                document.getElementById('target-interests').innerText = "";
+            }
+
             const modal = document.getElementById('result-modal');
             modal.classList.add('active');
             
@@ -662,6 +797,9 @@
 
         window.closeModal = function() {
             document.getElementById('result-modal').classList.remove('active');
+            // Reset AI area
+            document.getElementById('ai-result-area').style.display = 'none';
+            document.getElementById('ai-result-area').innerHTML = '';
         }
 
         // --- VISUALS ---
