@@ -155,7 +155,7 @@
             100% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0); }
         }
 
-        /* BUTON QUIT (NOU) */
+        /* BUTON QUIT */
         .quit-btn {
             display: block;
             margin: 10px auto;
@@ -255,22 +255,25 @@
         <!-- LOGIN SECTION -->
         <div id="login-section">
             <h2>Identificare</h2>
-            <p>Creează-ți profilul</p>
+            <p>Creează-ți profilul sau introdu numele pentru a te loga.</p>
             <br>
             <input type="text" id="username" placeholder="Nume si prenume" required>
             
-            <div class="file-upload-wrapper">
-                <label for="file-upload" class="custom-file-upload">
-                    📷 Alege o poză 
-                </label>
-                <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
-                <p id="file-name" style="font-size: 0.8rem; margin-top: 5px; color: #aaa;">Nicio poză selectată</p>
+            <!-- Zona de Upload -->
+            <div id="upload-area">
+                <div class="file-upload-wrapper">
+                    <label for="file-upload" class="custom-file-upload">
+                        📷 Alege o poză 
+                    </label>
+                    <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
+                    <p id="file-name" style="font-size: 0.8rem; margin-top: 5px; color: #aaa;">Nicio poză selectată (sau avatar implicit)</p>
+                </div>
+                <canvas id="img-canvas" style="display: none;"></canvas>
+                <input type="hidden" id="final-image-base64">
             </div>
-            
-            <canvas id="img-canvas" style="display: none;"></canvas>
-            <input type="hidden" id="final-image-base64">
 
             <button class="btn" onclick="handleLogin()">Intră în Atelier</button>
+            <p id="login-msg" style="color: #ffddaa; font-size: 0.85rem; margin-top: 10px;"></p>
         </div>
 
         <!-- DASHBOARD -->
@@ -336,7 +339,7 @@
     <!-- SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc } 
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, setDoc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- CONFIGURARE FIREBASE ---
@@ -350,23 +353,27 @@
             measurementId: "G-W5771Z0NSW"
         };
 
-        let app, db, usersCollection;
+        let app, db, usersCollection, resultsDocRef;
 
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             usersCollection = collection(db, "secret_santa_users");
+            resultsDocRef = doc(db, "secret_santa_results", "final_draw");
             console.log("Firebase OK");
         } catch(e) {
             console.error("Eroare Init:", e);
-            alert("Eroare conexiune. Verifică consola.");
+            alert("Eroare conexiune. Verifică consola (F12).");
         }
 
+        // --- STATE ---
         let currentUser = JSON.parse(localStorage.getItem('ss_user_local')) || null;
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+        let finalResults = null; // Aici salvam rezultatul final al extragerii
 
+        // --- START ---
         window.onload = () => {
             createSnow();
             startCountdown();
@@ -399,15 +406,40 @@
             }
         }
 
-        // --- LOGIN ---
-        window.handleLogin = function() {
+        // --- LOGIN INTELIGENT ---
+        window.handleLogin = async function() {
             const name = document.getElementById('username').value;
             const imgBase64 = document.getElementById('final-image-base64').value;
+            const loginMsg = document.getElementById('login-msg');
+            
             if(!name) return alert("Scrie un nume!");
-            const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-            currentUser = { name, img: finalImg };
-            localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-            checkLocalLogin();
+            
+            loginMsg.innerText = 'Verificare în baza de date...';
+
+            try {
+                // 1. Cautam numele in baza de date (pentru login rapid)
+                const q = query(usersCollection, where("name", "==", name));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    // LOGAT: Nume gasit, folosim poza salvata
+                    const userData = querySnapshot.docs[0].data();
+                    currentUser = { name: userData.name, img: userData.img };
+                    localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
+                    loginMsg.innerText = 'Autentificat cu succes!';
+                    checkLocalLogin();
+                } else {
+                    // UTILIZATOR NOU: Folosim poza noua sau avatar default
+                    const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+                    currentUser = { name, img: finalImg };
+                    localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
+                    loginMsg.innerText = 'Profil nou creat local!';
+                    checkLocalLogin();
+                }
+            } catch (e) {
+                console.error("Eroare la login:", e);
+                loginMsg.innerText = 'Eroare de rețea sau permisiuni.';
+            }
         }
 
         function checkLocalLogin() {
@@ -450,7 +482,6 @@
                     img: currentUser.img,
                     timestamp: Date.now()
                 });
-                // Resetam UI dupa adaugare
                 await checkIfJoined();
                 btn.style.display = 'block';
                 loader.style.display = 'none';
@@ -461,7 +492,6 @@
             }
         }
 
-        // FUNCTIA DE RETRAGERE (DOAR PENTRU TINE)
         window.quitSecretSanta = async function() {
             if(!confirm("Ești sigur că vrei să renunți la Secret Santa?")) return;
 
@@ -481,7 +511,7 @@
             }
         }
 
-        // --- LIVE LIST ---
+        // --- LIVE LIST & RESULTS ---
         function listenToParticipants() {
             onSnapshot(usersCollection, (snapshot) => {
                 allParticipants = [];
@@ -505,7 +535,7 @@
                 displayList.forEach(p => {
                     const card = document.createElement('div');
                     card.className = 'participant-card';
-                    // AM SCOS BUTONUL DE STERGERE ADMIN DE AICI!
+                    // Am scos butonul de stergere X, doar adminul poate sterge din consola
                     card.innerHTML = `
                         <img src="${p.img}" alt="${p.name}">
                         <p style="font-size:0.8rem;">${p.name}</p>
@@ -513,22 +543,73 @@
                     list.appendChild(card);
                 });
             });
+
+            // Ascultam si rezultatul final al extragerii
+            onSnapshot(resultsDocRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().pairs) {
+                    finalResults = docSnap.data().pairs;
+                } else {
+                    finalResults = null;
+                }
+            });
         }
 
-        // --- EXTRAGERE ---
-        window.revealResult = function() {
+        // --- EXTRAGERE SI SALVARE REZULTAT FINAL ---
+        function calculateAndSaveDraw() {
+            if(allParticipants.length < 2) {
+                console.error("Nu sunt suficienti participanti pentru extragere.");
+                return null;
+            }
+
+            // 1. Sortam dupa ID-ul aleatoriu pentru ordinea initiala imprevizibila
+            const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
+            
+            const pairs = {};
+            // 2. Facem maparea ciclică (Persoana N -> Persoana N+1)
+            for (let i = 0; i < sortedList.length; i++) {
+                const giver = sortedList[i].name;
+                const receiverIndex = (i + 1) % sortedList.length;
+                const receiver = sortedList[receiverIndex].name;
+                pairs[giver] = receiver;
+            }
+
+            // 3. Salvam rezultatul final in baza de date
+            setDoc(resultsDocRef, { 
+                pairs: pairs, 
+                timestamp: Date.now() 
+            });
+            
+            return pairs;
+        }
+
+        window.revealResult = async function() {
             if(allParticipants.length < 2) return alert("Prea puțini participanți!");
 
-            const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
-            const myIndex = sortedList.findIndex(p => p.name === currentUser.name);
+            let resultPairs = finalResults;
             
-            if(myIndex === -1) return alert("Nu ești în listă!");
+            if (!resultPairs) {
+                // Daca nu exista rezultate (primul om care apasa)
+                const docSnap = await getDoc(resultsDocRef);
+                if (docSnap.exists() && docSnap.data().pairs) {
+                    // S-a salvat intre timp
+                    resultPairs = docSnap.data().pairs;
+                } else {
+                    // Calculeaza si salveaza rezultatul definitiv
+                    resultPairs = calculateAndSaveDraw();
+                    if (!resultPairs) return alert("Eroare la calcularea extragerii.");
+                }
+            }
 
-            let targetIndex = myIndex + 1;
-            if(targetIndex >= sortedList.length) targetIndex = 0;
+            const targetName = resultPairs[currentUser.name];
+            
+            if (!targetName) return alert("Nu ai fost gasit in extragere. Incearca sa te re-inscii.");
 
-            const targetPerson = sortedList[targetIndex];
+            // Gasim poza persoanei extrase
+            const targetPerson = allParticipants.find(p => p.name === targetName);
+            
+            if (!targetPerson) return alert("Eroare: Persoana extrasa nu a fost gasita in lista.");
 
+            // Afisam rezultatul
             document.querySelector('.gift-box').style.display = 'none';
             const resultCard = document.getElementById('result-display');
             document.getElementById('target-name').innerText = targetPerson.name;
@@ -536,6 +617,7 @@
             resultCard.style.display = 'block';
         }
 
+        // --- HELPERS ---
         function startCountdown() {
             const interval = setInterval(() => {
                 const now = new Date().getTime();
