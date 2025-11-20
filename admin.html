@@ -3,67 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Lista Master</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Admin Extragere Secret Santa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --dark: #0f0f0f; --green: #165b33; --gold: #f8b229; --snow: #ffffff; }
+        :root { --red: #d42426; --green: #165b33; --gold: #f8b229; --dark: #0f0f0f; --snow: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: var(--dark);
             color: var(--snow);
             font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
         }
-        h1 { color: var(--gold); }
-        .list-container {
-            width: 100%;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        .pair-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .person {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .person img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid var(--gold);
-        }
-        .arrow { color: var(--gold); font-size: 1.5rem; }
-        .hidden { display: none; }
+        .container { width: 90%; max-width: 700px; padding: 40px; text-align: center; }
+        h1 { font-family: 'Mountains of Christmas', cursive; color: var(--red); font-size: 2.5rem; margin-bottom: 20px; }
+        .card { background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input[type="password"] { padding: 10px; border-radius: 5px; border: none; background: rgba(255, 255, 255, 0.1); color: white; margin-bottom: 15px; width: 80%; max-width: 300px; }
+        .btn { background: var(--gold); color: var(--dark); border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #ffe4a7; }
+        
+        #results-container { text-align: left; margin-top: 30px; }
+        .pair { display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 10px; }
+        .giver { font-weight: bold; color: var(--gold); }
+        .receiver { color: var(--red); }
+        .arrow { font-size: 1.5rem; color: var(--green); }
+        .loading { color: #aaa; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay" style="margin-top: 50px;">
-        <h1>Zona Secretă Admin</h1>
-        <p>Se încarcă...</p>
-    </div>
+    <div class="container">
+        <h1>Admin Extragere Secret Santa</h1>
 
-    <div id="content" class="hidden">
-        <h1>📋 Lista Master Extrageri</h1>
-        <div class="list-container" id="master-list">
-            <!-- Aici vor aparea perechile -->
+        <div id="login-form" class="card">
+            <h2>Autentificare</h2>
+            <p>Această pagină este destinată doar administratorului.</p>
+            <br>
+            <input type="password" id="admin-password" placeholder="Parolă Admin">
+            <button class="btn" onclick="checkPassword()">Intră</button>
+        </div>
+
+        <div id="admin-dashboard" class="card" style="display: none;">
+            <h2>Rezultate Finale</h2>
+            <p style="margin-bottom: 20px;">Aceasta este extragerea definitivă a Secret Santa (cine dă cadou cui).</p>
+            
+            <div id="results-container">
+                <p class="loading">Se așteaptă rezultatele extragerii sau datele din baza de date...</p>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // --- CONFIGURARE FIREBASE (TREBUIE SA FIE IDENTICA CU INDEX.HTML) ---
         const firebaseConfig = {
             apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
             authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -73,64 +71,72 @@
             appId: "1:970940351396:web:13a4f88f1f23278f6db731",
             measurementId: "G-W5771Z0NSW"
         };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.onload = async () => {
-            const password = prompt("Introdu parola de admin:");
-            // --- SCHIMBA PAROLA AICI DACA VREI ---
-            if (password === "craciun2024") {
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('content').classList.remove('hidden');
-                loadMasterList();
-            } else {
-                alert("Parolă greșită!");
-                document.getElementById('login-overlay').innerHTML = "<h1>Acces Interzis</h1>";
-            }
-        };
-
-        async function loadMasterList() {
-            const querySnapshot = await getDocs(collection(db, "secret_santa_users"));
-            let allParticipants = [];
-            
-            querySnapshot.forEach((doc) => {
-                allParticipants.push({ id: doc.id, ...doc.data() });
-            });
-
-            if(allParticipants.length < 2) {
-                document.getElementById('master-list').innerHTML = "<p>Prea puțini participanți pentru a genera lista.</p>";
-                return;
-            }
-
-            // SORTARE IDENTICA CU SITE-UL PRINCIPAL (CRITIC)
-            const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
-            
-            const container = document.getElementById('master-list');
-            container.innerHTML = "";
-
-            sortedList.forEach((giver, index) => {
-                // Calculam cine primeste (exact ca pe site)
-                let targetIndex = index + 1;
-                if(targetIndex >= sortedList.length) targetIndex = 0;
-                const receiver = sortedList[targetIndex];
-
-                const row = document.createElement('div');
-                row.className = 'pair-row';
-                row.innerHTML = `
-                    <div class="person">
-                        <img src="${giver.img}">
-                        <span>${giver.name}</span>
-                    </div>
-                    <span class="arrow">➔</span>
-                    <div class="person">
-                        <img src="${receiver.img}">
-                        <span>${receiver.name}</span>
-                    </div>
-                `;
-                container.appendChild(row);
-            });
+        
+        let db, resultsDocRef;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            resultsDocRef = doc(db, "secret_santa_results", "final_draw");
+        } catch(e) {
+            console.error("Eroare Init:", e);
+            document.getElementById('results-container').innerHTML = '<p style="color:red;">Eroare conexiune Firebase. Verifică parola și consola.</p>';
         }
+
+        // --- LOGICA ADMIN ---
+        window.checkPassword = function() {
+            const password = document.getElementById('admin-password').value;
+            // Parola: craciun2024
+            if (password === "craciun2024") {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                displayResults();
+            } else {
+                alert("Parolă incorectă!");
+            }
+        }
+
+        async function displayResults() {
+            const container = document.getElementById('results-container');
+            container.innerHTML = '<p class="loading">Se încarcă rezultatele...</p>';
+
+            try {
+                // 1. Incarcam rezultatul final (perechile)
+                const docSnap = await getDoc(resultsDocRef);
+
+                if (!docSnap.exists() || !docSnap.data().pairs) {
+                    container.innerHTML = '<p class="loading" style="color:#ffcc66;">⚠️ Rezultatul extragerii nu a fost încă stabilit. Așteaptă ca primul participant să apese pe cadou după 1 Decembrie.</p>';
+                    return;
+                }
+
+                const pairs = docSnap.data().pairs;
+                const pairNames = Object.keys(pairs);
+
+                if (pairNames.length < 2) {
+                    container.innerHTML = '<p class="loading" style="color:red;">Eroare: Baza de date conține prea puține perechi.</p>';
+                    return;
+                }
+
+                // 2. Afișăm perechile
+                container.innerHTML = '';
+                pairNames.sort().forEach(giverName => {
+                    const receiverName = pairs[giverName];
+                    
+                    const pairDiv = document.createElement('div');
+                    pairDiv.className = 'pair';
+                    pairDiv.innerHTML = `
+                        <span class="giver">${giverName}</span>
+                        <span class="arrow">➔</span>
+                        <span class="receiver">${receiverName}</span>
+                    `;
+                    container.appendChild(pairDiv);
+                });
+
+            } catch (e) {
+                console.error("Eroare la afișarea rezultatelor admin:", e);
+                container.innerHTML = `<p style="color:red;">Eroare: Nu s-a putut citi din baza de date. (Verifică setările 'Rules').</p>`;
+            }
+        }
+
     </script>
 </body>
 </html>
