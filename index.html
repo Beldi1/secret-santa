@@ -155,14 +155,31 @@
             100% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0); }
         }
 
+        /* BUTON QUIT (NOU) */
+        .quit-btn {
+            display: block;
+            margin: 10px auto;
+            background: transparent;
+            border: 2px solid #ff4d4d;
+            color: #ff4d4d;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .quit-btn:hover {
+            background: #ff4d4d;
+            color: white;
+        }
+
         .participants-list {
             display: flex;
             gap: 15px;
             overflow-x: auto;
             padding: 20px 0;
-            scrollbar-width: none; /* Ascunde scrollbar pe Firefox */
+            scrollbar-width: none;
         }
-        /* Ascunde scrollbar pe Chrome/Safari */
         .participants-list::-webkit-scrollbar { display: none; }
 
         .participant-card {
@@ -172,6 +189,7 @@
             border-radius: 15px;
             animation: popIn 0.5s ease forwards;
             text-align: center;
+            position: relative;
         }
         .participant-card img {
             width: 60px;
@@ -180,6 +198,23 @@
             object-fit: cover;
             margin-bottom: 5px;
         }
+
+        /* BUTON STERGERE ADMIN (MIC) */
+        .delete-btn-admin {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .delete-btn-admin:hover { background: red; }
 
         /* EXTRAGERE */
         #reveal-section { display: none; margin-top: 30px; }
@@ -237,20 +272,18 @@
         <!-- LOGIN SECTION -->
         <div id="login-section">
             <h2>Identificare</h2>
-            <p>Creează-ți profilul pentru extragere.</p>
+            <p>Creează-ți profilul</p>
             <br>
-            <input type="text" id="username" placeholder="Numele tău (ex: Alex)" required>
+            <input type="text" id="username" placeholder="Nume si prenume" required>
             
-            <!-- Upload Poza -->
             <div class="file-upload-wrapper">
                 <label for="file-upload" class="custom-file-upload">
-                    📷 Alege o poză din telefon
+                    📷 Alege o poză 
                 </label>
                 <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
-                <p id="file-name" style="font-size: 0.8rem; margin-top: 5px; color: #aaa;">Nicio poză selectată (va fi pus avatar default)</p>
+                <p id="file-name" style="font-size: 0.8rem; margin-top: 5px; color: #aaa;">Nicio poză selectată</p>
             </div>
             
-            <!-- Canvas ascuns pentru compresia imaginii -->
             <canvas id="img-canvas" style="display: none;"></canvas>
             <input type="hidden" id="final-image-base64">
 
@@ -271,18 +304,21 @@
 
             <!-- JOIN BUTTON -->
             <div id="join-area" class="join-container hidden">
-                <p style="margin-bottom: 15px;">Înscrie-te oficial în listă!</p>
+                <p style="margin-bottom: 15px;">Înscrie-te pe listă!</p>
                 <div class="loader" id="join-loader"></div>
                 <button class="btn join-btn" onclick="joinSecretSanta()">JOIN 🎅</button>
             </div>
 
-            <!-- MSG INSCRIS -->
-            <div id="joined-msg" class="hidden" style="color: var(--gold); font-size: 1.2rem; margin: 20px 0;">
-                ✅ Ești înscris! Așteaptă extragerea.
+            <!-- MSG INSCRIS & QUIT BUTTON -->
+            <div id="joined-msg" class="hidden" style="margin: 20px 0;">
+                <div style="color: var(--gold); font-size: 1.2rem; margin-bottom: 10px;">
+                    ✅ Ești înscris! Așteaptă extragerea.
+                </div>
+                <button class="quit-btn" onclick="quitSecretSanta()">❌ Mă retrag din joc 😞</button>
             </div>
 
             <!-- LISTA OAMENI -->
-            <h3 style="margin-top: 30px; text-align: left;">Spiriduși înscriși (<span id="count-display">0</span>):</h3>
+            <h3 style="margin-top: 30px; text-align: left;">Persoane inscrise deja: (<span id="count-display">0</span>):</h3>
             <div class="participants-list" id="participants-container">
                 <p style="padding:10px;">Se conectează la baza de date...</p>
             </div>
@@ -294,7 +330,7 @@
                 <p>Apasă pe cadou!</p>
                 
                 <div id="result-display" class="result-card">
-                    <h3>Trebuie să îi iei cadou lui:</h3>
+                    <h3>Trebuie să îi iei cadou pentru:</h3>
                     <img id="target-img" src="" class="profile-preview" style="margin-top: 10px;">
                     <h2 id="target-name" style="color: var(--gold);">NUME</h2>
                 </div>
@@ -307,18 +343,20 @@
         <ul style="list-style: none; padding: 0; margin-top: 10px; opacity: 0.8;">
             <li>1. Bugetul recomandat: 100 RON.</li>
             <li>2. Cadoul trebuie să fie amuzant sau util.</li>
-            <li>3. Extragerea e finală!</li>
+            <li>3. Nu artati nimanui pe cine ati primit in urma extragerii.</li>
+            <li>4. Daca esti Gay nu ai voie sa participi.</li>
+            <li>5. Foloseste numele si poza ta!!!!!</li>
+            <li>6. Extragerea e finală!</li>
         </ul>
     </footer>
 
     <!-- SCRIPT -->
     <script type="module">
-        // Importam librariile Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } 
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- CONFIGURARE FIREBASE (Datele tale) ---
+        // --- CONFIGURARE FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
             authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -329,7 +367,6 @@
             measurementId: "G-W5771Z0NSW"
         };
 
-        // Initializare
         let app, db, usersCollection;
 
         try {
@@ -342,14 +379,11 @@
             alert("Eroare conexiune. Verifică consola.");
         }
 
-        // --- VARIABILE GLOBALE ---
         let currentUser = JSON.parse(localStorage.getItem('ss_user_local')) || null;
         let allParticipants = [];
-        // DATA EXTRAGERII: 1 Decembrie 00:00
         const currentYear = new Date().getFullYear();
         const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
 
-        // --- LA INCARCARE ---
         window.onload = () => {
             createSnow();
             startCountdown();
@@ -357,49 +391,37 @@
             if(db) listenToParticipants();
         };
 
-        // --- 1. LOGICA UPLOAD & COMPRESIE POZA ---
+        // --- UPLOAD POZA ---
         window.processImage = function(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 document.getElementById('file-name').innerText = "Aleasă: " + file.name;
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = function() {
-                        // Folosim un canvas pentru a micsora imaginea
                         const canvas = document.getElementById('img-canvas');
                         const ctx = canvas.getContext('2d');
-                        
-                        // Limita latime 300px (pastreaza aspect ratio)
                         const MAX_WIDTH = 300;
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
-
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                        // Salveaza ca text (base64)
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Calitate 70%
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                         document.getElementById('final-image-base64').value = dataUrl;
-                        console.log("Imagine procesata OK.");
                     }
                 }
                 reader.readAsDataURL(file);
             }
         }
 
-        // --- 2. LOGIN ---
+        // --- LOGIN ---
         window.handleLogin = function() {
             const name = document.getElementById('username').value;
             const imgBase64 = document.getElementById('final-image-base64').value;
-            
             if(!name) return alert("Scrie un nume!");
-            
-            // Daca nu a pus poza, generam una random
             const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-
             currentUser = { name, img: finalImg };
             localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
             checkLocalLogin();
@@ -415,7 +437,6 @@
             }
         }
 
-        // --- 3. VERIFICARE SI INSCRIERE ---
         async function checkIfJoined() {
             try {
                 const q = query(usersCollection, where("name", "==", currentUser.name));
@@ -430,12 +451,10 @@
                 }
             } catch(e) {
                 console.error(e);
-                if(e.code === 'permission-denied') {
-                    alert("EROARE: Nu ai activat 'Test Mode' în Firebase Rules!");
-                }
             }
         }
 
+        // --- JOIN & QUIT ---
         window.joinSecretSanta = async function() {
             const loader = document.getElementById('join-loader');
             const btn = document.querySelector('.join-btn');
@@ -448,7 +467,10 @@
                     img: currentUser.img,
                     timestamp: Date.now()
                 });
-                location.reload();
+                // Resetam UI dupa adaugare
+                await checkIfJoined();
+                btn.style.display = 'block';
+                loader.style.display = 'none';
             } catch (e) {
                 alert("Eroare la inscriere: " + e.message);
                 btn.style.display = 'block';
@@ -456,7 +478,39 @@
             }
         }
 
-        // --- 4. CITIRE LIVE ---
+        // FUNCTIA DE RETRAGERE (NOUA)
+        window.quitSecretSanta = async function() {
+            if(!confirm("Ești sigur că vrei să renunți la Secret Santa?")) return;
+
+            try {
+                // Cautam documentul userului curent in baza de date
+                const q = query(usersCollection, where("name", "==", currentUser.name));
+                const querySnapshot = await getDocs(q);
+
+                querySnapshot.forEach(async (docSnapshot) => {
+                    await deleteDoc(docSnapshot.ref);
+                });
+
+                alert("Te-ai retras cu succes.");
+                // Resetam UI
+                checkIfJoined();
+
+            } catch (e) {
+                alert("Eroare la retragere: " + e.message);
+            }
+        }
+
+        // FUNCTIE ADMIN STERGERE
+        window.deleteUser = async function(id) {
+            if(confirm("Ștergi acest utilizator?")) {
+                try {
+                    await deleteDoc(doc(db, "secret_santa_users", id));
+                    checkIfJoined();
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        // --- LIVE LIST ---
         function listenToParticipants() {
             onSnapshot(usersCollection, (snapshot) => {
                 allParticipants = [];
@@ -464,7 +518,6 @@
                 list.innerHTML = '';
                 
                 snapshot.forEach((doc) => {
-                    // Luam ID-ul documentului pentru sortare aleatorie
                     const data = doc.data();
                     allParticipants.push({ id: doc.id, ...data });
                 });
@@ -481,29 +534,26 @@
                 displayList.forEach(p => {
                     const card = document.createElement('div');
                     card.className = 'participant-card';
+                    // Butonul mic de stergere (X) ramane pentru admin/curatenie
                     card.innerHTML = `
+                        <button class="delete-btn-admin" onclick="deleteUser('${p.id}')">×</button>
                         <img src="${p.img}" alt="${p.name}">
                         <p style="font-size:0.8rem;">${p.name}</p>
                     `;
                     list.appendChild(card);
                 });
-            }, (error) => {
-                console.error("Eroare snapshot:", error);
             });
         }
 
-        // --- 5. EXTRAGEREA ---
+        // --- EXTRAGERE ---
         window.revealResult = function() {
             if(allParticipants.length < 2) return alert("Prea puțini participanți!");
 
-            // Sortam dupa ID-ul unic (Random si Consistent)
             const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
-            
             const myIndex = sortedList.findIndex(p => p.name === currentUser.name);
             
             if(myIndex === -1) return alert("Nu ești în listă!");
 
-            // Il luam pe urmatorul (circular)
             let targetIndex = myIndex + 1;
             if(targetIndex >= sortedList.length) targetIndex = 0;
 
@@ -516,13 +566,10 @@
             resultCard.style.display = 'block';
         }
 
-        // --- HELPERS ---
         function startCountdown() {
             const interval = setInterval(() => {
                 const now = new Date().getTime();
                 const distance = drawDate - now;
-                
-                // PENTRU TEST: Pune 'true' in loc de 'distance < 0' ca sa vezi extragerea acum
                 if (distance < 0) { 
                     clearInterval(interval);
                     document.querySelector('.countdown-box').classList.add('hidden');
