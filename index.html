@@ -445,10 +445,11 @@
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         
-        // PENTRU TEST (Activ):
-        const drawDate = new Date().getTime() - 1000; 
-        // PENTRU LIVE (Decomentează pentru 1 Dec):
-        // const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+        // PENTRU TEST (Dezactivat):
+        // const drawDate = new Date().getTime() - 1000; 
+        
+        // PENTRU LIVE (Activ - 1 Decembrie):
+        const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
 
         let finalResults = null; 
 
