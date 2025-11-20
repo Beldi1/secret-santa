@@ -6,7 +6,6 @@
     <title>Secret Santa 2024</title>
     <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-    
         /* --- MODERN UI & VARIABLES --- */
         :root {
             --red: #ff3b3f;
@@ -413,7 +412,15 @@
     </div>
 
     <footer>
-        <p>Creat cu magie de Crăciun ✨</p>
+        <h3>📜 Regulament</h3>
+        <ul style="list-style: none; padding: 0; margin-top: 10px; opacity: 0.8;">
+            <li>1. Bugetul recomandat: 100 RON.</li>
+            <li>2. Cadoul trebuie să fie amuzant sau util.</li>
+            <li>3. Nu artati nimanui pe cine ati primit in urma extragerii.</li>
+            <li>4. Daca esti Gay nu ai voie sa participi.</li>
+            <li>5. Foloseste numele si poza ta!!!!!</li>
+            <li>6. Extragerea e finală!</li>
+        </ul>
     </footer>
 
     <!-- SCRIPT -->
@@ -690,18 +697,6 @@
                 c.appendChild(f);
             }
         }
-         function createSnow1() {
-            const c = document.getElementById('snow-container');
-            for(let i=0; i<40; i++) {
-                const f = document.createElement('div');
-                f.className = 'snowflake'; f.innerHTML = 'hoe';
-                f.style.left = Math.random()*100+'vw';
-                f.style.animationDuration = (Math.random()*5+4)+'s';
-                f.style.opacity = Math.random();
-                c.appendChild(f);
-            }
-        }
-
 
         // --- CONFETTI LOGIC (Simpla si fara librarii externe grele) ---
         function launchConfetti() {
