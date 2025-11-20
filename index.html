@@ -371,7 +371,14 @@
         let currentUser = JSON.parse(localStorage.getItem('ss_user_local')) || null;
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
-        const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+        
+        // --- MODIFICARE PENTRU TEST ---
+        // PENTRU TEST (Extragerea e deschisa ACUM):
+        const drawDate = new Date().getTime() - 1000; 
+
+        // PENTRU LIVE (Varianta originala - sterge linia de sus si decomenteaza asta cand termini testul):
+        // const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
+
         let finalResults = null; 
 
         // --- HELPER: HASHING PAROLA (SHA-256) ---
@@ -660,7 +667,7 @@
             for(let i=0; i<50; i++) {
                 const f = document.createElement('div');
                 f.className = 'snowflake';
-                f.innerHTML = 'hoe';
+                f.innerHTML = '❄';
                 f.style.left = Math.random()*100+'vw';
                 f.style.animationDuration = (Math.random()*3+7)+'s';
                 c.appendChild(f);
