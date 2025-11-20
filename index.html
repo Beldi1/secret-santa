@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa 2024</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS: STILIZARE & TEMATICĂ --- */
+        :root {
+            --red: #d42426;
+            --green: #165b33;
+            --gold: #f8b229;
+            --dark: #0f0f0f;
+            --snow: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--dark);
+            color: var(--snow);
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+        }
+
+        /* Animație Zăpadă */
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            color: #fff;
+            font-size: 1em;
+            user-select: none;
+            z-index: 1;
+            animation-name: snowfall;
+            animation-duration: 10s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes snowfall {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0.3; }
+        }
+
+        /* Container Principal */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 50px;
+        }
+
+        h1, h2 {
+            font-family: 'Mountains of Christmas', cursive;
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(248, 178, 41, 0.5);
+        }
+        h1 { font-size: 3rem; margin-bottom: 10px; }
+
+        /* LOGIN SCREEN */
+        #login-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Mountains of Christmas', cursive;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--red);
+        }
+
+        /* DASHBOARD */
+        #dashboard-section { display: none; }
+
+        .profile-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            object-fit: cover;
+            margin: 0 auto 10px;
+            display: block;
+        }
+
+        /* COUNTDOWN */
+        .countdown-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        .time-unit {
+            background: rgba(22, 91, 51, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            min-width: 60px;
+        }
+        .time-unit span { font-size: 1.5rem; font-weight: bold; display: block; }
+        .time-unit label { font-size: 0.7rem; text-transform: uppercase; }
+
+        /* JOIN BUTTON ANIMATION */
+        .join-container { margin: 40px 0; }
+        .join-btn {
+            background: linear-gradient(45deg, var(--red), #ff4d4d);
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(212, 36, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0); }
+        }
+
+        /* LISTA PARTICIPANTI */
+        .participants-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 20px 0;
+            scrollbar-width: none; /* Firefox */
+        }
+        .participant-card {
+            min-width: 100px;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 15px;
+            animation: popIn 0.5s ease forwards;
+        }
+        .participant-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 5px;
+        }
+
+        /* EXTRAGEREA */
+        #reveal-section {
+            display: none;
+            margin-top: 30px;
+        }
+        .gift-box {
+            font-size: 4rem;
+            cursor: pointer;
+            animation: shake 1s infinite;
+        }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, var(--green), #0b2e19);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid var(--gold);
+            display: none;
+            animation: expand 0.5s ease-out;
+        }
+        @keyframes expand {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        /* FOOTER / REGULAMENT */
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            background: rgba(0,0,0,0.8);
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="snow-container"></div>
+
+    <div class="container">
+        <h1 style="color: var(--red);">Secret Santa 🎄</h1>
+        
+        <div id="login-section">
+            <h2>Identificare</h2>
+            <p>Pentru a participa, creează-ți profilul.</p>
+            <br>
+            <input type="text" id="username" placeholder="Numele tău (ex: Alex)" required>
+            <input type="text" id="avatar-url" placeholder="Link Poză (opțional)" >
+            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">*Lăsați gol pentru avatar default</p>
+            <button class="btn" onclick="handleLogin()">Intră în Atelier</button>
+        </div>
+
+        <div id="dashboard-section">
+            <img id="user-avatar-display" src="" class="profile-preview" alt="Profile">
+            <h2 id="welcome-msg">Salut!</h2>
+            
+            <div class="countdown-box">
+                <div class="time-unit"><span id="days">00</span><label>Zile</label></div>
+                <div class="time-unit"><span id="hours">00</span><label>Ore</label></div>
+                <div class="time-unit"><span id="minutes">00</span><label>Min</label></div>
+                <div class="time-unit"><span id="seconds">00</span><label>Sec</label></div>
+            </div>
+
+            <div id="join-area" class="join-container">
+                <p style="margin-bottom: 15px;">Nu te-ai înscris încă!</p>
+                <button class="btn join-btn" onclick="joinSecretSanta()">JOIN 🎅</button>
+            </div>
+
+            <div id="joined-msg" class="hidden" style="color: var(--gold); font-size: 1.2rem; margin: 20px 0;">
+                ✅ Te-ai înscris cu succes! Așteaptă extragerea.
+            </div>
+
+            <h3 style="margin-top: 30px; text-align: left;">Spiriduși înscriși:</h3>
+            <div class="participants-list" id="participants-container">
+                </div>
+
+            <div id="live-draw-area" class="hidden">
+                <h2 style="color: var(--red); animation: blink 1s infinite;">🎁 EXTRAGEREA A ÎNCEPUT! 🎁</h2>
+                <br>
+                <div class="gift-box" onclick="revealResult()">🎁</div>
+                <p>Apasă pe cadou pentru a vedea pe cine ai extras!</p>
+                
+                <div id="result-display" class="result-card">
+                    <h3>Trebuie să îi iei cadou lui:</h3>
+                    <img id="target-img" src="" class="profile-preview" style="margin-top: 10px;">
+                    <h2 id="target-name" style="color: var(--gold);">NUME</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <h3>📜 Regulament Oficial</h3>
+        <ul style="list-style: none; padding: 0; margin-top: 10px; opacity: 0.8;">
+            <li>1. Bugetul recomandat este de 100 RON.</li>
+            <li>2. Cadoul trebuie să fie amuzant sau util.</li>
+            <li>3. Extragerea este finală și nu se schimbă.</li>
+            <li>4. Distracția este obligatorie!</li>
+        </ul>
+    </footer>
+
+    <script>
+        // --- CONFIGURARE ---
+        // Data extragerii: 1 Decembrie anul curent, ora 00:00
+        const currentYear = new Date().getFullYear();
+        const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime(); 
+        
+        // "Baza de date" simulata (pentru demo, fiindca nu avem backend real pe GitHub simplu)
+        const fakeParticipants = [
+            { name: "Andreea", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Andreea" },
+            { name: "Mihai", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mihai" },
+            { name: "Elena", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Elena" },
+            { name: "George", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=George" }
+        ];
+
+        // --- LOGICĂ ---
+
+        // 1. Verificam daca e logat pe acest device
+        window.onload = function() {
+            createSnow();
+            checkLogin();
+            startCountdown();
+            renderParticipants();
+        };
+
+        function createSnow() {
+            const container = document.getElementById('snow-container');
+            for(let i=0; i<50; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.innerHTML = '❄';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 7) + 's';
+                flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+                container.appendChild(flake);
+            }
+        }
+
+        function checkLogin() {
+            const user = localStorage.getItem('ss_user');
+            if(user) {
+                const userData = JSON.parse(user);
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('dashboard-section').style.display = 'block';
+                document.getElementById('welcome-msg').innerText = `Salut, ${userData.name}!`;
+                document.getElementById('user-avatar-display').src = userData.img;
+                
+                if(localStorage.getItem('ss_joined') === 'true') {
+                    document.getElementById('join-area').classList.add('hidden');
+                    document.getElementById('joined-msg').classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('username').value;
+            let img = document.getElementById('avatar-url').value;
+            
+            if(!name) return alert("Te rog introdu un nume!");
+            if(!img) img = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`; // Avatar default
+
+            const userData = { name: name, img: img };
+            localStorage.setItem('ss_user', JSON.stringify(userData));
+            location.reload();
+        }
+
+        function joinSecretSanta() {
+            // Salvam starea ca s-a inscris
+            localStorage.setItem('ss_joined', 'true');
+            
+            // Animatie simpla
+            const btn = document.querySelector('.join-btn');
+            btn.innerHTML = "Te-ai înscris!";
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        function renderParticipants() {
+            const list = document.getElementById('participants-container');
+            // Adaugam userul curent daca e inscris
+            if(localStorage.getItem('ss_joined') === 'true') {
+                const me = JSON.parse(localStorage.getItem('ss_user'));
+                fakeParticipants.unshift(me); // Ne punem pe noi primii
+            }
+
+            fakeParticipants.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'participant-card';
+                card.innerHTML = `
+                    <img src="${p.img}" alt="${p.name}">
+                    <p style="font-size:0.8rem;">${p.name}</p>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function startCountdown() {
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = drawDate - now;
+
+                // Calcul timp
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('days').innerText = days < 10 ? '0'+days : days;
+                document.getElementById('hours').innerText = hours < 10 ? '0'+hours : hours;
+                document.getElementById('minutes').innerText = minutes < 10 ? '0'+minutes : minutes;
+                document.getElementById('seconds').innerText = seconds < 10 ? '0'+seconds : seconds;
+
+                // Daca timpul a expirat (a venit Craciunul)
+                // Pentru TEST: Poti schimba 'distance < 0' cu 'true' sa vezi efectul acum
+                if (distance < 0) { 
+                    clearInterval(interval);
+                    document.querySelector('.countdown-box').classList.add('hidden');
+                    document.getElementById('live-draw-area').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        function revealResult() {
+            // Logica de extragere aleatorie
+            // Excludem userul curent din lista de posibili
+            const me = JSON.parse(localStorage.getItem('ss_user'));
+            const possibilities = fakeParticipants.filter(p => p.name !== me.name);
+            
+            // Alegem random
+            const randomPerson = possibilities[Math.floor(Math.random() * possibilities.length)];
+
+            document.querySelector('.gift-box').style.display = 'none';
+            const resultCard = document.getElementById('result-display');
+            
+            document.getElementById('target-name').innerText = randomPerson.name;
+            document.getElementById('target-img').src = randomPerson.img;
+            
+            resultCard.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
