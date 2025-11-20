@@ -199,23 +199,6 @@
             margin-bottom: 5px;
         }
 
-        /* BUTON STERGERE ADMIN (MIC) */
-        .delete-btn-admin {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #555;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .delete-btn-admin:hover { background: red; }
-
         /* EXTRAGERE */
         #reveal-section { display: none; margin-top: 30px; }
         .gift-box { font-size: 4rem; cursor: pointer; animation: shake 1s infinite; margin: 20px auto; }
@@ -478,12 +461,11 @@
             }
         }
 
-        // FUNCTIA DE RETRAGERE (NOUA)
+        // FUNCTIA DE RETRAGERE (DOAR PENTRU TINE)
         window.quitSecretSanta = async function() {
             if(!confirm("Ești sigur că vrei să renunți la Secret Santa?")) return;
 
             try {
-                // Cautam documentul userului curent in baza de date
                 const q = query(usersCollection, where("name", "==", currentUser.name));
                 const querySnapshot = await getDocs(q);
 
@@ -492,14 +474,12 @@
                 });
 
                 alert("Te-ai retras cu succes.");
-                // Resetam UI
                 checkIfJoined();
 
             } catch (e) {
                 alert("Eroare la retragere: " + e.message);
             }
         }
-
 
         // --- LIVE LIST ---
         function listenToParticipants() {
@@ -525,9 +505,8 @@
                 displayList.forEach(p => {
                     const card = document.createElement('div');
                     card.className = 'participant-card';
-                    // Butonul mic de stergere (X) ramane pentru admin/curatenie
+                    // AM SCOS BUTONUL DE STERGERE ADMIN DE AICI!
                     card.innerHTML = `
-                        <button class="delete-btn-admin" onclick="deleteUser('${p.id}')">×</button>
                         <img src="${p.img}" alt="${p.name}">
                         <p style="font-size:0.8rem;">${p.name}</p>
                     `;
