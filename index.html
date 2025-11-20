@@ -2,339 +2,417 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Secret Santa 2024</title>
     <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- STILIZARE TEMATICA DE CRĂCIUN --- */
-        :root { --red: #d42426; --green: #165b33; --gold: #f8b229; --dark: #0f0f0f; --snow: #ffffff; }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+        /* --- MODERN UI & VARIABLES --- */
+        :root {
+            --red: #ff3b3f;
+            --dark-red: #a80000;
+            --green: #2dc937;
+            --dark-green: #0f5f1c;
+            --gold: #ffcc00;
+            --dark-bg: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+
         body {
-            background-color: var(--dark);
-            color: var(--snow);
+            background-color: var(--dark-bg);
+            color: white;
             font-family: 'Poppins', sans-serif;
             overflow-x: hidden;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            background: radial-gradient(circle at 50% 10%, #1a2a1a 0%, #000000 100%);
+            padding-bottom: 60px;
         }
 
-        /* Ninsorile */
+        /* --- BACKGROUND ANIMATIONS --- */
         .snowflake {
             position: fixed;
             top: -10px;
             color: #fff;
-            font-size: 1em;
+            font-size: 1.2em;
             user-select: none;
-            z-index: 1;
+            z-index: 0;
             animation: snowfall linear infinite;
             pointer-events: none;
+            text-shadow: 0 0 5px rgba(255,255,255,0.8);
         }
         @keyframes snowfall {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(100vh); opacity: 0.3; }
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(105vh) rotate(360deg); opacity: 0.2; }
         }
 
         .container {
-            width: 90%;
-            max-width: 600px;
+            width: 95%;
+            max-width: 500px;
             z-index: 10;
             padding: 20px;
             text-align: center;
-            margin-top: 20px;
-            margin-bottom: 50px;
+            margin-top: 40px;
+            position: relative;
         }
 
-        h1, h2 {
+        /* --- TYPOGRAPHY --- */
+        h1 {
             font-family: 'Mountains of Christmas', cursive;
-            color: var(--gold);
-            text-shadow: 0 0 10px rgba(248, 178, 41, 0.5);
+            color: var(--red);
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 59, 63, 0.4);
+            animation: float 3s ease-in-out infinite;
         }
-        h1 { font-size: 3rem; margin-bottom: 10px; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-        /* INPUTS & FORMS */
-        #login-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        h2 { font-weight: 600; color: var(--gold); margin-bottom: 10px; letter-spacing: 1px; }
+
+        /* --- GLASS CARDS --- */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
+        
+        /* --- INPUTS --- */
         input {
             width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            margin: 8px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
             color: white;
             font-size: 1rem;
-        }
-
-        /* Custom File Upload Button */
-        .file-upload-wrapper { margin: 15px 0; }
-        .custom-file-upload {
-            display: inline-block;
-            padding: 10px 20px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.1);
-            border: 1px dashed var(--gold);
-            border-radius: 10px;
-            color: var(--gold);
-            font-size: 0.9rem;
-            width: 100%;
             transition: 0.3s;
         }
-        .custom-file-upload:hover { background: rgba(255,255,255,0.2); }
-        input[type="file"] { display: none; }
+        input:focus {
+            border-color: var(--gold);
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+        }
 
+        /* --- BUTTONS --- */
         .btn {
-            background: var(--red);
+            background: linear-gradient(135deg, var(--red), var(--dark-red));
             color: white;
             border: none;
-            padding: 15px 40px;
+            padding: 18px 40px;
             font-size: 1.2rem;
             border-radius: 50px;
             cursor: pointer;
-            font-family: 'Mountains of Christmas', cursive;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(255, 59, 63, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px var(--red);
+        .btn:active { transform: scale(0.95); }
+        .btn::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
         }
+        .btn:hover::after { left: 100%; }
 
-        /* DASHBOARD */
-        #dashboard-section { display: none; }
-
-        .profile-preview {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-            object-fit: cover;
-            margin: 0 auto 10px;
-            display: block;
-            box-shadow: 0 0 15px rgba(248, 178, 41, 0.3);
-        }
-
-        /* COUNTDOWN */
-        .countdown-box {
+        /* --- UPLOAD ZONE --- */
+        .file-upload-wrapper { margin: 15px 0; }
+        .custom-file-upload {
             display: flex;
+            align-items: center;
             justify-content: center;
             gap: 10px;
-            margin: 30px 0;
-        }
-        .time-unit {
-            background: rgba(22, 91, 51, 0.8);
-            padding: 10px;
-            border-radius: 10px;
-            min-width: 60px;
-        }
-        .time-unit span { font-size: 1.5rem; font-weight: bold; display: block; }
-        .time-unit label { font-size: 0.7rem; text-transform: uppercase; }
-
-        /* JOIN BUTTON & LIST */
-        .join-container { margin: 40px 0; }
-        .join-btn {
-            background: linear-gradient(45deg, var(--red), #ff4d4d);
-            font-size: 2rem;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(212, 36, 38, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(212, 36, 38, 0); }
-        }
-
-        /* BUTON QUIT */
-        .quit-btn {
-            display: block;
-            margin: 10px auto;
-            background: transparent;
-            border: 2px solid #ff4d4d;
-            color: #ff4d4d;
-            padding: 8px 20px;
-            border-radius: 20px;
+            padding: 15px;
             cursor: pointer;
-            font-size: 0.9rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 15px;
+            color: #ccc;
             transition: 0.3s;
         }
-        .quit-btn:hover {
-            background: #ff4d4d;
-            color: white;
+        .custom-file-upload:hover { background: rgba(255,255,255,0.1); border-color: var(--gold); color: var(--gold); }
+        input[type="file"] { display: none; }
+
+        /* --- DASHBOARD --- */
+        .profile-preview {
+            width: 110px; height: 110px;
+            border-radius: 50%;
+            border: 4px solid var(--gold);
+            object-fit: cover;
+            margin: -60px auto 15px; /* Pop out effect */
+            display: block;
+            box-shadow: 0 0 25px rgba(248, 178, 41, 0.4);
+            background: #000;
+        }
+        
+        .dashboard-header { margin-top: 30px; }
+
+        /* --- COUNTDOWN --- */
+        .countdown-box {
+            display: flex; justify-content: center; gap: 10px; margin: 30px 0;
+        }
+        .time-unit {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 12px;
+            min-width: 65px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .time-unit span { font-size: 1.6rem; font-weight: 700; display: block; color: var(--green); }
+        .time-unit label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+
+        /* --- JOIN & QUIT --- */
+        .join-btn {
+            background: linear-gradient(135deg, #2dc937, #0f5f1c);
+            box-shadow: 0 10px 20px rgba(45, 201, 55, 0.3);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(45, 201, 55, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(45, 201, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(45, 201, 55, 0); }
         }
 
+        .quit-btn {
+            display: inline-block; margin: 15px auto;
+            background: transparent; border: 2px solid rgba(255, 59, 63, 0.5);
+            color: rgba(255, 59, 63, 0.8);
+            padding: 8px 20px; border-radius: 20px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            transition: 0.3s;
+        }
+        .quit-btn:hover { background: rgba(255, 59, 63, 0.1); color: #fff; border-color: #ff3b3f; }
+
+        /* --- LISTA PARTICIPANTI --- */
         .participants-list {
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding: 20px 0;
-            scrollbar-width: none;
+            display: flex; gap: 15px; overflow-x: auto; padding: 10px 0 30px;
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
         .participants-list::-webkit-scrollbar { display: none; }
-
+        
         .participant-card {
-            min-width: 100px;
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            border-radius: 15px;
-            animation: popIn 0.5s ease forwards;
-            text-align: center;
-            position: relative;
+            min-width: 90px;
+            display: flex; flex-direction: column; align-items: center;
+            animation: slideIn 0.5s ease forwards;
+            opacity: 0;
         }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         .participant-card img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 5px;
+            width: 60px; height: 60px; border-radius: 50%;
+            object-fit: cover; border: 2px solid rgba(255,255,255,0.3);
+            margin-bottom: 8px; transition: 0.3s;
+        }
+        .participant-card p { font-size: 0.75rem; opacity: 0.8; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* --- GIFT BOX ANIMATION --- */
+        .gift-wrapper {
+            perspective: 1000px;
+            cursor: pointer;
+            margin: 40px auto;
+            width: 120px; height: 120px;
+        }
+        .gift-box-emoji {
+            font-size: 6rem;
+            animation: gift-wobble 2s ease-in-out infinite;
+            display: inline-block;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
+            transition: transform 0.3s;
+        }
+        .gift-wrapper:hover .gift-box-emoji { transform: scale(1.1); animation: none; }
+        
+        @keyframes gift-wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
         }
 
-        /* EXTRAGERE */
-        #reveal-section { display: none; margin-top: 30px; }
-        .gift-box { font-size: 4rem; cursor: pointer; animation: shake 1s infinite; margin: 20px auto; }
-        @keyframes shake { 
-            0% { transform: rotate(0deg); } 
-            25% { transform: rotate(5deg); } 
-            75% { transform: rotate(-5deg); } 
-            100% { transform: rotate(0deg); } 
+        /* --- POPUP MODAL --- */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.4s ease;
         }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
 
-        .result-card {
-            background: linear-gradient(135deg, var(--green), #0b2e19);
-            padding: 20px;
-            border-radius: 20px;
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a1a, #2a0a0a);
+            width: 90%; max-width: 400px;
+            padding: 40px 20px;
+            border-radius: 30px;
             border: 2px solid var(--gold);
-            display: none;
-            animation: expand 0.5s ease-out;
-        }
-        @keyframes expand { from { transform: scale(0); } to { transform: scale(1); } }
-
-        footer {
-            margin-top: auto;
-            padding: 20px;
-            background: rgba(0,0,0,0.8);
-            width: 100%;
             text-align: center;
-            font-size: 0.9rem;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            transform: scale(0.7);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 50px rgba(255, 204, 0, 0.2);
+            position: relative;
+            overflow: hidden;
         }
-        
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .modal-img {
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            border: 5px solid var(--gold);
+            object-fit: cover;
+            margin: 20px auto;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+        }
+
+        .winner-name {
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .close-modal-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .close-modal-btn:hover { background: white; color: black; }
+
+        /* Canvas Confetti */
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1001;
+        }
+
         .hidden { display: none !important; }
-        
-        /* Loader */
-        .loader {
-            border: 4px solid #f3f3f3; 
-            border-top: 4px solid var(--gold); 
-            border-radius: 50%; 
-            width: 30px; 
-            height: 30px; 
-            animation: spin 1s linear infinite; 
-            margin: 10px auto; 
-            display: none;
-        }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--gold); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        footer {
+            margin-top: auto; padding: 20px; font-size: 0.8rem; opacity: 0.6; text-align: center; width: 100%;
+        }
     </style>
 </head>
 <body>
 
+    <!-- Background Elements -->
     <div id="snow-container"></div>
+    <canvas id="confetti-canvas"></canvas>
 
     <div class="container">
-        <h1 style="color: var(--red);">Secret Santa 🎄</h1>
+        <h1>Secret Santa 🎄</h1>
         
         <!-- LOGIN SECTION -->
-        <div id="login-section">
+        <div id="login-section" class="glass-card">
             <h2>Identificare</h2>
-            <p>Introdu numele și parola pentru a te loga sau a crea cont.</p>
-            <br>
-            <input type="text" id="username" placeholder="Nume si prenume" required>
-            <input type="password" id="userpass" placeholder="Parolă (ține-o minte!)" required>
+            <p style="opacity: 0.8; margin-bottom: 20px;">Hai să vedem cine ești!</p>
             
-            <!-- Zona de Upload -->
+            <input type="text" id="username" placeholder="Nume și Prenume" required autocomplete="off">
+            <input type="password" id="userpass" placeholder="Parolă Secretă" required>
+            
             <div id="upload-area">
                 <div class="file-upload-wrapper">
                     <label for="file-upload" class="custom-file-upload">
-                        📷 Alege o poză 
+                        <span>📷</span> Alege o poză
                     </label>
                     <input id="file-upload" type="file" accept="image/*" onchange="processImage(this)"/>
-                    <p id="file-name" style="font-size: 0.8rem; margin-top: 5px; color: #aaa;">Nicio poză selectată (sau avatar implicit)</p>
                 </div>
+                <p id="file-name" style="font-size: 0.8rem; color: var(--gold); min-height: 1.2em;"></p>
                 <canvas id="img-canvas" style="display: none;"></canvas>
                 <input type="hidden" id="final-image-base64">
             </div>
 
-            <button class="btn" onclick="handleLogin()">Intră în Atelier</button>
-            <p id="login-msg" style="color: #ffddaa; font-size: 0.85rem; margin-top: 10px;"></p>
+            <button class="btn" onclick="handleLogin()">Intră în Atelier 🎁</button>
+            <p id="login-msg" style="color: #ff8888; font-size: 0.85rem; margin-top: 15px; font-weight: 600; min-height: 1.2em;"></p>
         </div>
 
         <!-- DASHBOARD -->
-        <div id="dashboard-section">
-            <img id="user-avatar-display" src="" class="profile-preview" alt="Profile">
-            <h2 id="welcome-msg">Salut!</h2>
-            
-            <div class="countdown-box">
-                <div class="time-unit"><span id="days">00</span><label>Zile</label></div>
-                <div class="time-unit"><span id="hours">00</span><label>Ore</label></div>
-                <div class="time-unit"><span id="minutes">00</span><label>Min</label></div>
-                <div class="time-unit"><span id="seconds">00</span><label>Sec</label></div>
-            </div>
-
-            <!-- JOIN BUTTON -->
-            <div id="join-area" class="join-container hidden">
-                <p style="margin-bottom: 15px;">Înscrie-te pe listă!</p>
-                <div class="loader" id="join-loader"></div>
-                <button class="btn join-btn" onclick="joinSecretSanta()">JOIN 🎅</button>
-            </div>
-
-            <!-- MSG INSCRIS & QUIT BUTTON -->
-            <div id="joined-msg" class="hidden" style="margin: 20px 0;">
-                <div style="color: var(--gold); font-size: 1.2rem; margin-bottom: 10px;">
-                    ✅ Ești înscris! Așteaptă extragerea.
+        <div id="dashboard-section" class="hidden">
+            <div class="glass-card dashboard-header">
+                <img id="user-avatar-display" src="" class="profile-preview" alt="Profile">
+                <h2 id="welcome-msg">Salut!</h2>
+                
+                <div class="countdown-box">
+                    <div class="time-unit"><span id="days">00</span><label>Zile</label></div>
+                    <div class="time-unit"><span id="hours">00</span><label>Ore</label></div>
+                    <div class="time-unit"><span id="minutes">00</span><label>Min</label></div>
+                    <div class="time-unit"><span id="seconds">00</span><label>Sec</label></div>
                 </div>
-                <button class="quit-btn" onclick="quitSecretSanta()">❌ Mă retrag din joc 😞</button>
+
+                <!-- JOIN STATE -->
+                <div id="join-area" class="join-container hidden">
+                    <p style="margin-bottom: 15px; font-size: 1.1rem;">Te bagi la joc?</p>
+                    <div class="loader" id="join-loader"></div>
+                    <button class="btn join-btn" onclick="joinSecretSanta()">DA, VREAU! 🎅</button>
+                </div>
+
+                <!-- JOINED STATE -->
+                <div id="joined-msg" class="hidden" style="margin: 20px 0;">
+                    <div style="color: var(--green); font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 10px rgba(45, 201, 55, 0.4);">
+                        ✅ Ești înscris!
+                    </div>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">Așteaptă marea extragere.</p>
+                    <button class="quit-btn" onclick="quitSecretSanta()">Nu mai vreau (Ieși din joc)</button>
+                </div>
             </div>
 
             <!-- LISTA OAMENI -->
-            <h3 style="margin-top: 30px; text-align: left;">Persoane inscrise deja: (<span id="count-display">0</span>):</h3>
-            <div class="participants-list" id="participants-container">
-                <p style="padding:10px;">Se conectează la baza de date...</p>
+            <div style="margin-top: 30px;">
+                <h3 style="text-align: left; margin-bottom: 10px; margin-left: 10px;">
+                    Participanți (<span id="count-display">0</span>)
+                </h3>
+                <div class="participants-list" id="participants-container">
+                    <!-- JS Injected -->
+                </div>
             </div>
 
             <!-- EXTRAGERE LIVE -->
-            <div id="live-draw-area" class="hidden">
-                <h2 style="color: var(--red); animation: blink 1s infinite;">🎁 EXTRAGEREA A ÎNCEPUT! 🎁</h2>
-                <div class="gift-box" onclick="revealResult()">🎁</div>
-                <p>Apasă pe cadou!</p>
-                
-                <div id="result-display" class="result-card">
-                    <h3>Trebuie să îi iei cadou pentru:</h3>
-                    <img id="target-img" src="" class="profile-preview" style="margin-top: 10px;">
-                    <h2 id="target-name" style="color: var(--gold);">NUME</h2>
+            <div id="live-draw-area" class="glass-card hidden" style="margin-top: 30px;">
+                <h2 style="color: var(--red);">🎁 Deschide Cadoul!</h2>
+                <div class="gift-wrapper" onclick="revealResult()">
+                    <span class="gift-box-emoji">🎁</span>
                 </div>
+                <p style="opacity: 0.8;">Apasă cu încredere!</p>
             </div>
         </div>
     </div>
 
+    <!-- POPUP REZULTAT -->
+    <div id="result-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: #ccc; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px;">Secret Santa-ul tău este:</h3>
+            
+            <img id="target-img" class="modal-img" src="">
+            <h1 id="target-name" class="winner-name">NUME</h1>
+            
+            <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 20px;">Sssst! E un secret! 🤫</p>
+            <button class="close-modal-btn" onclick="closeModal()">Am înțeles!</button>
+        </div>
+    </div>
+
     <footer>
-        <h3>📜 Regulament</h3>
-        <ul style="list-style: none; padding: 0; margin-top: 10px; opacity: 0.8;">
-            <li>1. Bugetul recomandat: 100 RON.</li>
-            <li>2. Cadoul trebuie să fie amuzant sau util.</li>
-            <li>3. Nu artati nimanui pe cine ati primit in urma extragerii.</li>
-            <li>4. Respectați regulile jocului și pe ceilalți participanți!</li>
-            <li>5. Foloseste numele si poza ta!!!!!</li>
-            <li>6. Extragerea e finală!</li>
-        </ul>
+        <p>Creat cu magie de Crăciun ✨</p>
     </footer>
 
     <!-- SCRIPT -->
@@ -343,7 +421,7 @@
         import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, setDoc, getDoc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- CONFIGURARE FIREBASE ---
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyAkMDbDQVyWqeOKlyB9n7_93q7f6RuHiX0",
             authDomain: "secret-santa-ce9e0.firebaseapp.com",
@@ -355,33 +433,26 @@
         };
 
         let app, db, usersCollection, resultsDocRef;
-
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             usersCollection = collection(db, "secret_santa_users");
             resultsDocRef = doc(db, "secret_santa_results", "final_draw");
-            console.log("Firebase OK");
-        } catch(e) {
-            console.error("Eroare Init:", e);
-            alert("Eroare conexiune. Verifică consola (F12).");
-        }
+        } catch(e) { console.error(e); alert("Eroare Firebase!"); }
 
         // --- STATE ---
         let currentUser = JSON.parse(localStorage.getItem('ss_user_local')) || null;
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         
-        // --- MODIFICARE PENTRU TEST ---
-        // PENTRU TEST (Extragerea e deschisa ACUM):
+        // PENTRU TEST (Activ):
         const drawDate = new Date().getTime() - 1000; 
-
-        // PENTRU LIVE (Varianta originala - sterge linia de sus si decomenteaza asta cand termini testul):
+        // PENTRU LIVE (Decomentează pentru 1 Dec):
         // const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
 
         let finalResults = null; 
 
-        // --- HELPER: HASHING PAROLA (SHA-256) ---
+        // --- HELPERS ---
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
@@ -390,7 +461,7 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- START ---
+        // --- INIT ---
         window.onload = () => {
             createSnow();
             startCountdown();
@@ -398,11 +469,11 @@
             if(db) listenToParticipants();
         };
 
-        // --- UPLOAD POZA ---
+        // --- IMAGES ---
         window.processImage = function(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                document.getElementById('file-name').innerText = "Aleasă: " + file.name;
+                document.getElementById('file-name').innerText = file.name.substring(0, 20) + "...";
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
@@ -415,66 +486,54 @@
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        document.getElementById('final-image-base64').value = dataUrl;
+                        document.getElementById('final-image-base64').value = canvas.toDataURL('image/jpeg', 0.7);
                     }
                 }
                 reader.readAsDataURL(file);
             }
         }
 
-        // --- LOGIN CU PAROLA ---
+        // --- LOGIN ---
         window.handleLogin = async function() {
             const name = document.getElementById('username').value;
             const pass = document.getElementById('userpass').value;
             const imgBase64 = document.getElementById('final-image-base64').value;
             const loginMsg = document.getElementById('login-msg');
             
-            if(!name || !pass) return alert("Scrie nume și parolă!");
+            if(!name || !pass) { loginMsg.innerText = "Completează toate câmpurile!"; return; }
             
-            loginMsg.innerText = 'Securizare și conectare...';
+            loginMsg.innerText = 'Verificăm... 🎅';
 
             try {
                 const passHash = await hashPassword(pass);
-
-                // 1. Cautam utilizatorul in DB
                 const q = query(usersCollection, where("name", "==", name));
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
-                    // USER EXISTENT: Verificam parola
                     const userData = querySnapshot.docs[0].data();
-                    
-                    // Compatibilitate cu useri vechi fara parola (optional)
                     if(userData.passwordHash && userData.passwordHash !== passHash) {
-                         loginMsg.innerText = 'Parolă incorectă!';
-                         return alert("Parola este greșită pentru acest utilizator!");
+                         loginMsg.innerText = 'Parolă greșită!'; return;
                     }
-
-                    // Login OK
                     currentUser = { name: userData.name, img: userData.img, passwordHash: passHash };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-                    loginMsg.innerText = 'Autentificat!';
+                    loginMsg.innerText = '';
                     checkLocalLogin();
-
                 } else {
-                    // USER NOU: Cream profil local (se salveaza in DB la JOIN)
                     const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
                     currentUser = { name, img: finalImg, passwordHash: passHash };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-                    loginMsg.innerText = 'Cont nou pregătit!';
+                    loginMsg.innerText = '';
                     checkLocalLogin();
                 }
             } catch (e) {
-                console.error("Eroare la login:", e);
-                loginMsg.innerText = 'Eroare conexiune.';
+                console.error(e); loginMsg.innerText = 'Eroare conexiune.';
             }
         }
 
         function checkLocalLogin() {
             if(currentUser) {
                 document.getElementById('login-section').classList.add('hidden');
-                document.getElementById('dashboard-section').style.display = 'block';
+                document.getElementById('dashboard-section').classList.remove('hidden');
                 document.getElementById('welcome-msg').innerText = `Salut, ${currentUser.name}!`;
                 document.getElementById('user-avatar-display').src = currentUser.img;
                 if(db) checkIfJoined();
@@ -484,163 +543,119 @@
         async function checkIfJoined() {
             try {
                 const q = query(usersCollection, where("name", "==", currentUser.name));
-                const querySnapshot = await getDocs(q);
-                
-                if (!querySnapshot.empty) {
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
                     document.getElementById('join-area').classList.add('hidden');
                     document.getElementById('joined-msg').classList.remove('hidden');
                 } else {
                     document.getElementById('join-area').classList.remove('hidden');
                     document.getElementById('joined-msg').classList.add('hidden');
                 }
-            } catch(e) {
-                console.error(e);
-            }
+            } catch(e) {}
         }
 
-        // --- JOIN & QUIT ---
+        // --- JOIN/QUIT ---
         window.joinSecretSanta = async function() {
             const loader = document.getElementById('join-loader');
             const btn = document.querySelector('.join-btn');
-            btn.style.display = 'none';
-            loader.style.display = 'block';
+            btn.style.display = 'none'; loader.style.display = 'block';
 
             try {
-                // Verificam inca o data daca numele e luat
                 const q = query(usersCollection, where("name", "==", currentUser.name));
                 const snap = await getDocs(q);
-                if(!snap.empty) {
-                    alert("Acest nume este deja înscris!");
-                    btn.style.display = 'block'; loader.style.display = 'none';
-                    return;
-                }
+                if(!snap.empty) { alert("Deja înscris!"); location.reload(); return; }
 
                 await addDoc(usersCollection, {
-                    name: currentUser.name,
-                    img: currentUser.img,
-                    passwordHash: currentUser.passwordHash, // Salvam parola criptata
-                    timestamp: Date.now()
+                    name: currentUser.name, img: currentUser.img, passwordHash: currentUser.passwordHash, timestamp: Date.now()
                 });
                 await checkIfJoined();
-                btn.style.display = 'block';
-                loader.style.display = 'none';
+                btn.style.display = 'block'; loader.style.display = 'none';
             } catch (e) {
-                alert("Eroare la inscriere: " + e.message);
-                btn.style.display = 'block';
-                loader.style.display = 'none';
+                alert("Eroare: " + e.message);
+                btn.style.display = 'block'; loader.style.display = 'none';
             }
         }
 
         window.quitSecretSanta = async function() {
-            if(!confirm("Ești sigur că vrei să renunți la Secret Santa?")) return;
-
-            // Verificare extra de siguranta: parola trebuie sa corespunda
-            const pass = prompt("Pentru a te retrage, confirmă parola ta:");
+            if(!confirm("Sigur vrei să te retragi?")) return;
+            const pass = prompt("Confirmă parola:");
             if(!pass) return;
-            
             const passHash = await hashPassword(pass);
-            if(passHash !== currentUser.passwordHash) return alert("Parolă greșită! Nu te poți retrage.");
+            if(passHash !== currentUser.passwordHash) return alert("Parolă greșită!");
 
             try {
                 const q = query(usersCollection, where("name", "==", currentUser.name));
-                const querySnapshot = await getDocs(q);
-
-                querySnapshot.forEach(async (docSnapshot) => {
-                    await deleteDoc(docSnapshot.ref);
-                });
-
-                alert("Te-ai retras cu succes.");
-                checkIfJoined();
-
-            } catch (e) {
-                alert("Eroare la retragere: " + e.message);
-            }
+                const snap = await getDocs(q);
+                snap.forEach(async (d) => await deleteDoc(d.ref));
+                alert("Te-ai retras."); checkIfJoined();
+            } catch (e) { alert("Eroare: " + e.message); }
         }
 
-        // --- LIVE LIST & RESULTS ---
+        // --- LISTENER ---
         function listenToParticipants() {
-            onSnapshot(usersCollection, (snapshot) => {
+            onSnapshot(usersCollection, (snap) => {
                 allParticipants = [];
+                snap.forEach((doc) => allParticipants.push({ id: doc.id, ...doc.data() }));
+                document.getElementById('count-display').innerText = allParticipants.length;
+                
                 const list = document.getElementById('participants-container');
                 list.innerHTML = '';
-                
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    allParticipants.push({ id: doc.id, ...data });
-                });
-
-                document.getElementById('count-display').innerText = allParticipants.length;
-
-                if(allParticipants.length === 0) {
-                    list.innerHTML = '<p>Nimeni încă...</p>';
-                    return;
-                }
-
-                const displayList = [...allParticipants].sort((a, b) => a.timestamp - b.timestamp);
-
-                displayList.forEach(p => {
-                    const card = document.createElement('div');
-                    card.className = 'participant-card';
-                    card.innerHTML = `
-                        <img src="${p.img}" alt="${p.name}">
-                        <p style="font-size:0.8rem;">${p.name}</p>
-                    `;
-                    list.appendChild(card);
+                const sorted = [...allParticipants].sort((a, b) => a.timestamp - b.timestamp);
+                sorted.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'participant-card';
+                    div.innerHTML = `<img src="${p.img}"><p>${p.name}</p>`;
+                    list.appendChild(div);
                 });
             });
-
-            onSnapshot(resultsDocRef, (docSnap) => {
-                if (docSnap.exists() && docSnap.data().pairs) {
-                    finalResults = docSnap.data().pairs;
-                } else {
-                    finalResults = null;
-                }
+            onSnapshot(resultsDocRef, (snap) => {
+                if (snap.exists() && snap.data().pairs) finalResults = snap.data().pairs;
             });
         }
 
         // --- EXTRAGERE ---
         function calculateAndSaveDraw() {
             if(allParticipants.length < 2) return null;
-            const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
+            const sorted = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
             const pairs = {};
-            for (let i = 0; i < sortedList.length; i++) {
-                const giver = sortedList[i].name;
-                const receiverIndex = (i + 1) % sortedList.length;
-                const receiver = sortedList[receiverIndex].name;
-                pairs[giver] = receiver;
+            for (let i = 0; i < sorted.length; i++) {
+                pairs[sorted[i].name] = sorted[(i + 1) % sorted.length].name;
             }
             setDoc(resultsDocRef, { pairs: pairs, timestamp: Date.now() });
             return pairs;
         }
 
         window.revealResult = async function() {
-            if(allParticipants.length < 2) return alert("Prea puțini participanți!");
-
-            let resultPairs = finalResults;
-            
-            if (!resultPairs) {
-                const docSnap = await getDoc(resultsDocRef);
-                if (docSnap.exists() && docSnap.data().pairs) {
-                    resultPairs = docSnap.data().pairs;
-                } else {
-                    resultPairs = calculateAndSaveDraw();
-                    if (!resultPairs) return alert("Eroare la calcularea extragerii.");
-                }
+            if(allParticipants.length < 2) return alert("Prea puțini oameni!");
+            let res = finalResults;
+            if (!res) {
+                const snap = await getDoc(resultsDocRef);
+                if (snap.exists() && snap.data().pairs) res = snap.data().pairs;
+                else res = calculateAndSaveDraw();
             }
-
-            const targetName = resultPairs[currentUser.name];
-            if (!targetName) return alert("Nu ai fost gasit in extragere.");
+            
+            if(!res) return alert("Eroare calcul.");
+            const targetName = res[currentUser.name];
+            if (!targetName) return alert("Nu ești în listă!");
+            
             const targetPerson = allParticipants.find(p => p.name === targetName);
-            if (!targetPerson) return alert("Eroare: Persoana extrasa nu a fost gasita in lista.");
+            if (!targetPerson) return alert("Persoană necunoscută.");
 
-            document.querySelector('.gift-box').style.display = 'none';
-            const resultCard = document.getElementById('result-display');
+            // Show Modal
             document.getElementById('target-name').innerText = targetPerson.name;
             document.getElementById('target-img').src = targetPerson.img;
-            resultCard.style.display = 'block';
+            const modal = document.getElementById('result-modal');
+            modal.classList.add('active');
+            
+            // Trigger Confetti
+            launchConfetti();
         }
 
-        // --- HELPERS ---
+        window.closeModal = function() {
+            document.getElementById('result-modal').classList.remove('active');
+        }
+
+        // --- VISUALS ---
         function startCountdown() {
             const interval = setInterval(() => {
                 const now = new Date().getTime();
@@ -664,14 +679,62 @@
 
         function createSnow() {
             const c = document.getElementById('snow-container');
-            for(let i=0; i<50; i++) {
+            for(let i=0; i<40; i++) {
                 const f = document.createElement('div');
-                f.className = 'snowflake';
-                f.innerHTML = '❄';
+                f.className = 'snowflake'; f.innerHTML = '❄';
                 f.style.left = Math.random()*100+'vw';
-                f.style.animationDuration = (Math.random()*3+7)+'s';
+                f.style.animationDuration = (Math.random()*5+5)+'s';
+                f.style.opacity = Math.random();
                 c.appendChild(f);
             }
+        }
+
+        // --- CONFETTI LOGIC (Simpla si fara librarii externe grele) ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const colors = ['#ff3b3f', '#ffcc00', '#2dc937', '#ffffff'];
+            
+            for(let i=0; i<150; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100
+                });
+            }
+            
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                
+                particles.forEach(p => {
+                    if(p.life > 0) {
+                        active = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.2; // gravity
+                        p.life--;
+                        p.size *= 0.96;
+                        
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                });
+                
+                if(active) requestAnimationFrame(animateConfetti);
+                else ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+            animateConfetti();
         }
     </script>
 </body>
