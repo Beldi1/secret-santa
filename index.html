@@ -66,7 +66,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        input[type="text"] {
+        input {
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -255,9 +255,10 @@
         <!-- LOGIN SECTION -->
         <div id="login-section">
             <h2>Identificare</h2>
-            <p>Creează-ți profilul sau introdu numele pentru a te loga.</p>
+            <p>Introdu numele și parola pentru a te loga sau a crea cont.</p>
             <br>
             <input type="text" id="username" placeholder="Nume si prenume" required>
+            <input type="password" id="userpass" placeholder="Parolă (ține-o minte!)" required>
             
             <!-- Zona de Upload -->
             <div id="upload-area">
@@ -330,7 +331,7 @@
             <li>1. Bugetul recomandat: 100 RON.</li>
             <li>2. Cadoul trebuie să fie amuzant sau util.</li>
             <li>3. Nu artati nimanui pe cine ati primit in urma extragerii.</li>
-            <li>4. Daca esti Gay nu ai voie sa participi.</li>
+            <li>4. Respectați regulile jocului și pe ceilalți participanți!</li>
             <li>5. Foloseste numele si poza ta!!!!!</li>
             <li>6. Extragerea e finală!</li>
         </ul>
@@ -339,7 +340,7 @@
     <!-- SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, setDoc } 
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, setDoc, getDoc } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- CONFIGURARE FIREBASE ---
@@ -371,7 +372,16 @@
         let allParticipants = [];
         const currentYear = new Date().getFullYear();
         const drawDate = new Date(`December 1, ${currentYear} 00:00:00`).getTime();
-        let finalResults = null; // Aici salvam rezultatul final al extragerii
+        let finalResults = null; 
+
+        // --- HELPER: HASHING PAROLA (SHA-256) ---
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         // --- START ---
         window.onload = () => {
@@ -406,39 +416,51 @@
             }
         }
 
-        // --- LOGIN INTELIGENT ---
+        // --- LOGIN CU PAROLA ---
         window.handleLogin = async function() {
             const name = document.getElementById('username').value;
+            const pass = document.getElementById('userpass').value;
             const imgBase64 = document.getElementById('final-image-base64').value;
             const loginMsg = document.getElementById('login-msg');
             
-            if(!name) return alert("Scrie un nume!");
+            if(!name || !pass) return alert("Scrie nume și parolă!");
             
-            loginMsg.innerText = 'Verificare în baza de date...';
+            loginMsg.innerText = 'Securizare și conectare...';
 
             try {
-                // 1. Cautam numele in baza de date (pentru login rapid)
+                const passHash = await hashPassword(pass);
+
+                // 1. Cautam utilizatorul in DB
                 const q = query(usersCollection, where("name", "==", name));
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
-                    // LOGAT: Nume gasit, folosim poza salvata
+                    // USER EXISTENT: Verificam parola
                     const userData = querySnapshot.docs[0].data();
-                    currentUser = { name: userData.name, img: userData.img };
+                    
+                    // Compatibilitate cu useri vechi fara parola (optional)
+                    if(userData.passwordHash && userData.passwordHash !== passHash) {
+                         loginMsg.innerText = 'Parolă incorectă!';
+                         return alert("Parola este greșită pentru acest utilizator!");
+                    }
+
+                    // Login OK
+                    currentUser = { name: userData.name, img: userData.img, passwordHash: passHash };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-                    loginMsg.innerText = 'Autentificat cu succes!';
+                    loginMsg.innerText = 'Autentificat!';
                     checkLocalLogin();
+
                 } else {
-                    // UTILIZATOR NOU: Folosim poza noua sau avatar default
+                    // USER NOU: Cream profil local (se salveaza in DB la JOIN)
                     const finalImg = imgBase64 || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-                    currentUser = { name, img: finalImg };
+                    currentUser = { name, img: finalImg, passwordHash: passHash };
                     localStorage.setItem('ss_user_local', JSON.stringify(currentUser));
-                    loginMsg.innerText = 'Profil nou creat local!';
+                    loginMsg.innerText = 'Cont nou pregătit!';
                     checkLocalLogin();
                 }
             } catch (e) {
                 console.error("Eroare la login:", e);
-                loginMsg.innerText = 'Eroare de rețea sau permisiuni.';
+                loginMsg.innerText = 'Eroare conexiune.';
             }
         }
 
@@ -477,9 +499,19 @@
             loader.style.display = 'block';
 
             try {
+                // Verificam inca o data daca numele e luat
+                const q = query(usersCollection, where("name", "==", currentUser.name));
+                const snap = await getDocs(q);
+                if(!snap.empty) {
+                    alert("Acest nume este deja înscris!");
+                    btn.style.display = 'block'; loader.style.display = 'none';
+                    return;
+                }
+
                 await addDoc(usersCollection, {
                     name: currentUser.name,
                     img: currentUser.img,
+                    passwordHash: currentUser.passwordHash, // Salvam parola criptata
                     timestamp: Date.now()
                 });
                 await checkIfJoined();
@@ -494,6 +526,13 @@
 
         window.quitSecretSanta = async function() {
             if(!confirm("Ești sigur că vrei să renunți la Secret Santa?")) return;
+
+            // Verificare extra de siguranta: parola trebuie sa corespunda
+            const pass = prompt("Pentru a te retrage, confirmă parola ta:");
+            if(!pass) return;
+            
+            const passHash = await hashPassword(pass);
+            if(passHash !== currentUser.passwordHash) return alert("Parolă greșită! Nu te poți retrage.");
 
             try {
                 const q = query(usersCollection, where("name", "==", currentUser.name));
@@ -535,7 +574,6 @@
                 displayList.forEach(p => {
                     const card = document.createElement('div');
                     card.className = 'participant-card';
-                    // Am scos butonul de stergere X, doar adminul poate sterge din consola
                     card.innerHTML = `
                         <img src="${p.img}" alt="${p.name}">
                         <p style="font-size:0.8rem;">${p.name}</p>
@@ -544,7 +582,6 @@
                 });
             });
 
-            // Ascultam si rezultatul final al extragerii
             onSnapshot(resultsDocRef, (docSnap) => {
                 if (docSnap.exists() && docSnap.data().pairs) {
                     finalResults = docSnap.data().pairs;
@@ -554,31 +591,18 @@
             });
         }
 
-        // --- EXTRAGERE SI SALVARE REZULTAT FINAL ---
+        // --- EXTRAGERE ---
         function calculateAndSaveDraw() {
-            if(allParticipants.length < 2) {
-                console.error("Nu sunt suficienti participanti pentru extragere.");
-                return null;
-            }
-
-            // 1. Sortam dupa ID-ul aleatoriu pentru ordinea initiala imprevizibila
+            if(allParticipants.length < 2) return null;
             const sortedList = [...allParticipants].sort((a,b) => a.id.localeCompare(b.id));
-            
             const pairs = {};
-            // 2. Facem maparea ciclică (Persoana N -> Persoana N+1)
             for (let i = 0; i < sortedList.length; i++) {
                 const giver = sortedList[i].name;
                 const receiverIndex = (i + 1) % sortedList.length;
                 const receiver = sortedList[receiverIndex].name;
                 pairs[giver] = receiver;
             }
-
-            // 3. Salvam rezultatul final in baza de date
-            setDoc(resultsDocRef, { 
-                pairs: pairs, 
-                timestamp: Date.now() 
-            });
-            
+            setDoc(resultsDocRef, { pairs: pairs, timestamp: Date.now() });
             return pairs;
         }
 
@@ -588,28 +612,20 @@
             let resultPairs = finalResults;
             
             if (!resultPairs) {
-                // Daca nu exista rezultate (primul om care apasa)
                 const docSnap = await getDoc(resultsDocRef);
                 if (docSnap.exists() && docSnap.data().pairs) {
-                    // S-a salvat intre timp
                     resultPairs = docSnap.data().pairs;
                 } else {
-                    // Calculeaza si salveaza rezultatul definitiv
                     resultPairs = calculateAndSaveDraw();
                     if (!resultPairs) return alert("Eroare la calcularea extragerii.");
                 }
             }
 
             const targetName = resultPairs[currentUser.name];
-            
-            if (!targetName) return alert("Nu ai fost gasit in extragere. Incearca sa te re-inscii.");
-
-            // Gasim poza persoanei extrase
+            if (!targetName) return alert("Nu ai fost gasit in extragere.");
             const targetPerson = allParticipants.find(p => p.name === targetName);
-            
             if (!targetPerson) return alert("Eroare: Persoana extrasa nu a fost gasita in lista.");
 
-            // Afisam rezultatul
             document.querySelector('.gift-box').style.display = 'none';
             const resultCard = document.getElementById('result-display');
             document.getElementById('target-name').innerText = targetPerson.name;
